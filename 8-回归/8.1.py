@@ -50,8 +50,7 @@ def lwlr(testPoint, x, y, k = 1.0):
     x_W = x.T * W * x
     if np.linalg.det(x_W) != 0.00:
         w_hat = x_W.I * (x.T) * W * y
-        y_test = testPoint * w_hat
-        return y_test
+        return testPoint * w_hat
     else:
         return False
 

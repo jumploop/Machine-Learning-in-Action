@@ -58,11 +58,9 @@ def chooseBestSplit(dataSet,leafType,errType,ops = (1,4)):
 #创建树
 def createTree(dataSet,leafType = regLeaf, errType = regErr, ops = (1,4)):
     feat,val = chooseBestSplit(dataSet,leafType,errType,ops)
-    if feat == None: return val #创建叶子结点
+    if feat is None: return val #创建叶子结点
 
-    retTree = {}
-    retTree["feat"] = feat
-    retTree["val"] = val
+    retTree = {"feat": feat, "val": val}
     data0,data1 = binSplitDataSet(dataSet,feat,val)
     retTree["left"] = createTree(data0,leafType,errType,ops)
     retTree["right"] = createTree(data1,leafType,errType,ops)
@@ -87,16 +85,16 @@ def prune(tree,testData):
     if isTree(tree['left']): tree['left'] = prune(tree['left'],data0) #剪枝左子树
     if isTree(tree['right']): tree['right'] = prune(tree['right'],data1) #剪枝右子树
 
-    if not isTree(tree['left']) and not isTree(tree['right']): #左右子树都是叶子结点
-        data0, data1 = binSplitDataSet(testData, tree['feat'], tree['val'])
-        errnoMerge = np.sum(np.power(data0[:, -1] - tree['left'],2)) + np.sum(np.power(data0[:, -1] - tree['left'],2))
-        treeMean = tree['left']+tree['right']/2
-        errMerge = np.sum(np.power(testData[:, -1] - treeMean,2))
-        if errMerge < errnoMerge:
-            print("merging")
-            return treeMean
-        else: return tree
-    else: return tree
+    if isTree(tree['left']) or isTree(tree['right']):
+        return tree
+    data0, data1 = binSplitDataSet(testData, tree['feat'], tree['val'])
+    errnoMerge = np.sum(np.power(data0[:, -1] - tree['left'],2)) + np.sum(np.power(data0[:, -1] - tree['left'],2))
+    treeMean = tree['left']+tree['right']/2
+    errMerge = np.sum(np.power(testData[:, -1] - treeMean,2))
+    if errMerge >= errnoMerge:
+        return tree
+    print("merging")
+    return treeMean
 
 #######3 模型树部分 ##########################################################################
 #线性模型
@@ -136,15 +134,17 @@ def modelTreeEval(model,testData):
 def treeForeCast(tree,testData,modelEval = regTreeEval):
     if not isTree(tree): return modelEval(tree,testData)
 
-    if testData[tree['feat']] > tree['val']:
-        if isTree(tree['left']):
-            return treeForeCast(tree['left'],testData,modelEval)
-        else:
-            return modelEval(tree['left'],testData)
+    if testData[tree['feat']] <= tree['val']:
+        return (
+            treeForeCast(tree['right'], testData, modelEval)
+            if isTree(tree['right'])
+            else modelEval(tree['right'], testData)
+        )
+
+    if isTree(tree['left']):
+        return treeForeCast(tree['left'],testData,modelEval)
     else:
-        if isTree(tree['right']):
-            return treeForeCast(tree['right'],testData,modelEval)
-        else: return modelEval(tree['right'],testData)
+        return modelEval(tree['left'],testData)
 
 #对测试集进行预测
 def createForeCast(tree,testData,modelEval = regTreeEval):

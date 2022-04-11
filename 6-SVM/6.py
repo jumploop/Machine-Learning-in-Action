@@ -4,13 +4,16 @@ import numpy as np
 #############6-1 SMO算法中的辅助函数#############################################################
 def loadDataSet(fileName): #加载数据集，返回列表
     content = open(fileName).readlines()
-    data = [list(map(float,line.strip("\n").split("\t")[0:-1])) for line in content] #特征
+    data = [
+        list(map(float, line.strip("\n").split("\t")[:-1])) for line in content
+    ]
+
     label = [float(line.strip("\n").split("\t")[-1]) for line in content] #标签
     return data,label
 
 def selectJrand(i,m): #选择alpha[j]
     j = i
-    while j == i:
+    while j == j:
         j = np.random.randint(0,m)
     return j
 
@@ -93,8 +96,7 @@ class optStruct:
 def calcEk(oS,k): #计算误差Ek
     # fxk = float(oS.X[k, :] * (oS.X.T) * np.multiply(oS.alpha, oS.label)) + oS.b  # 样本i的预测值 非核函数版本
     fxk = float(oS.K[:, k].T * np.multiply(oS.alpha, oS.label)) + oS.b  # 样本i的预测值 核函数版本
-    Ek = fxk - float(oS.label[k])
-    return Ek
+    return fxk - float(oS.label[k])
 
 def selectJ(i,oS,Ei): #选择最优的j,返回j和误差Ej
     maxj = -1
@@ -126,51 +128,52 @@ def updateEk(oS,k): #更新Ek
 ##############6-4 完整SMO算法中的优化例程##############################################################
 def innerL(i,oS):
     Ei = calcEk(oS,i)
-    if (oS.label[i] * Ei < -oS.tol and oS.alpha[i] < oS.C) or (oS.label[i] * Ei > oS.tol and oS.alpha[i] > 0):
-        j,Ej = selectJ(i,oS,Ei)  # 选择第二个alpha
-        alpha_oldi = oS.alpha[i].copy()
-        alpha_oldj = oS.alpha[j].copy()
+    if (oS.label[i] * Ei >= -oS.tol or oS.alpha[i] >= oS.C) and (
+        oS.label[i] * Ei <= oS.tol or oS.alpha[i] <= 0
+    ):
+        return 0
+    j,Ej = selectJ(i,oS,Ei)  # 选择第二个alpha
+    alpha_oldi = oS.alpha[i].copy()
+    alpha_oldj = oS.alpha[j].copy()
 
         # 设置H,L的值
-        if oS.label[i] != oS.label[j]:
-            L = max(0, oS.alpha[j] - oS.alpha[i])
-            H = min(oS.C, oS.C + oS.alpha[j] - oS.alpha[i])
-        else:
-            L = max(0, oS.alpha[j] + oS.alpha[i] - oS.C)
-            H = min(oS.C, oS.alpha[j] + oS.alpha[i])
-        if L == H: print("L==H"); return 0
-
-        #eta = oS.X[i, :] * oS.X[i, :].T + oS.X[j, :] * oS.X[j, :].T - 2 * oS.X[i, :] * oS.X[j, :].T #非核函数版本
-        eta = oS.K[i,i] + oS.K[j,j] - 2 * oS.K[i,j]  #核函数版本
-        if eta <= 0: print("eta<=0");return 0
-
-        oS.alpha[j] = alpha_oldj + oS.label[j] * (Ei - Ej) / eta  # 更新alpha[j]
-        oS.alpha[j] = clipAlpha(oS.alpha[j], H, L)
-        updateEk(oS,j) #更新误差缓存
-        if (abs(oS.alpha[j] - alpha_oldj) < 0.00001):
-            print("j is not moving enough!")
-            return 0
-
-        oS.alpha[i] = alpha_oldi + oS.label[i] * oS.label[j] * (alpha_oldj - oS.alpha[j])  # 更新alpha[i]
-        # 更新b-非核函数版本
-        # bi = oS.b - Ei - oS.label[i] * (oS.alpha[i] - alpha_oldi) * oS.X[i, :] * oS.X[i, :].T - oS.label[j] * (
-        # oS.alpha[j] - alpha_oldj) * oS.X[i, :] * oS.X[j, :].T
-        # bj = oS.b - Ej - oS.label[i] * (oS.alpha[i] - alpha_oldi) * oS.X[i, :] * oS.X[j, :].T - oS.label[j] * (
-        # oS.alpha[j] - alpha_oldj) * oS.X[j, :] * oS.X[j, :].T
-
-        #更新b 核函数版本
-        bi = oS.b - Ei - oS.label[i] * (oS.alpha[i] - alpha_oldi) * oS.K[i,i] - oS.label[j] * (oS.alpha[j] - alpha_oldj) * oS.K[i,j]
-        bj = oS.b - Ej - oS.label[i] * (oS.alpha[i] - alpha_oldi) * oS.K[i, j] - oS.label[j] * (oS.alpha[j] - alpha_oldj) * oS.K[j, j]
-
-        if oS.alpha[i] > 0 and oS.alpha[i] < oS.C:
-            oS.b = bi
-        elif oS.alpha[j] > 0 and oS.alpha[j] < oS.C:
-            oS.b = bj
-        else:
-            oS.b = (bi + bj) / 2.0
-        return 1
+    if oS.label[i] == oS.label[j]:
+        L = max(0, oS.alpha[j] + oS.alpha[i] - oS.C)
+        H = min(oS.C, oS.alpha[j] + oS.alpha[i])
     else:
+        L = max(0, oS.alpha[j] - oS.alpha[i])
+        H = min(oS.C, oS.C + oS.alpha[j] - oS.alpha[i])
+    if L == H: print("L==H"); return 0
+
+    #eta = oS.X[i, :] * oS.X[i, :].T + oS.X[j, :] * oS.X[j, :].T - 2 * oS.X[i, :] * oS.X[j, :].T #非核函数版本
+    eta = oS.K[i,i] + oS.K[j,j] - 2 * oS.K[i,j]  #核函数版本
+    if eta <= 0: print("eta<=0");return 0
+
+    oS.alpha[j] = alpha_oldj + oS.label[j] * (Ei - Ej) / eta  # 更新alpha[j]
+    oS.alpha[j] = clipAlpha(oS.alpha[j], H, L)
+    updateEk(oS,j) #更新误差缓存
+    if (abs(oS.alpha[j] - alpha_oldj) < 0.00001):
+        print("j is not moving enough!")
         return 0
+
+    oS.alpha[i] = alpha_oldi + oS.label[i] * oS.label[j] * (alpha_oldj - oS.alpha[j])  # 更新alpha[i]
+    # 更新b-非核函数版本
+    # bi = oS.b - Ei - oS.label[i] * (oS.alpha[i] - alpha_oldi) * oS.X[i, :] * oS.X[i, :].T - oS.label[j] * (
+    # oS.alpha[j] - alpha_oldj) * oS.X[i, :] * oS.X[j, :].T
+    # bj = oS.b - Ej - oS.label[i] * (oS.alpha[i] - alpha_oldi) * oS.X[i, :] * oS.X[j, :].T - oS.label[j] * (
+    # oS.alpha[j] - alpha_oldj) * oS.X[j, :] * oS.X[j, :].T
+
+    #更新b 核函数版本
+    bi = oS.b - Ei - oS.label[i] * (oS.alpha[i] - alpha_oldi) * oS.K[i,i] - oS.label[j] * (oS.alpha[j] - alpha_oldj) * oS.K[i,j]
+    bj = oS.b - Ej - oS.label[i] * (oS.alpha[i] - alpha_oldi) * oS.K[i, j] - oS.label[j] * (oS.alpha[j] - alpha_oldj) * oS.K[j, j]
+
+    if oS.alpha[i] > 0 and oS.alpha[i] < oS.C:
+        oS.b = bi
+    elif oS.alpha[j] > 0 and oS.alpha[j] < oS.C:
+        oS.b = bj
+    else:
+        oS.b = (bi + bj) / 2.0
+    return 1
 
 
 ##############6-5 完整版SMO的外循环代码###############################################################
@@ -186,14 +189,12 @@ def smoP(dataArr,labelArr,C,toler,maxIter,kTup=('lin',0)):
             for i in range(oS.m):
                 alphaPairsChanged += innerL(i,oS)
                 print("fullSet,iter: ",iter,"i: ",i,"alphaPairsChanged: ",alphaPairsChanged)
-            iter += 1
         else: #遍历非边界值
             nonBounds = np.nonzero((oS.alpha.A > 0) * (oS.alpha.A < oS.C))[0]
             for i in nonBounds:
                 alphaPairsChanged += innerL(i,oS)
                 print("nonBound,iter: ", iter, "i: ", i, "alphaPairsChanged: ", alphaPairsChanged)
-            iter += 1
-
+        iter += 1
         if entireSet: entireSet = False
         elif alphaPairsChanged == 0: entireSet = True
         print("iteration: ",iter)
@@ -202,8 +203,7 @@ def smoP(dataArr,labelArr,C,toler,maxIter,kTup=('lin',0)):
 def calcWs(alpha,label,data):
     dataMat = np.mat(data)
     labelMat = np.mat(label).T
-    w = dataMat.T * np.multiply(alpha,labelMat)
-    return w
+    return dataMat.T * np.multiply(alpha,labelMat)
 
 
 ####################6-6 核函数转换##################################################################
@@ -274,13 +274,11 @@ def loadImages(dirName):
     for i in range(m):
         label = float(fileNameList[i].split("_")[0])
         if label != 9:
-            filename = dirName + "/" + fileNameList[i]
             trainY.append(1)
-            trainX[i,:] = img2vector(filename)
-        elif label == 9:
-            filename = dirName + "/" + fileNameList[i]
+        else:
             trainY.append(-1)
-            trainX[i, :] = img2vector(filename)
+        filename = f'{dirName}/{fileNameList[i]}'
+        trainX[i,:] = img2vector(filename)
     return trainX,trainY
 
 def testDigits(kTup=('rbf',10)):

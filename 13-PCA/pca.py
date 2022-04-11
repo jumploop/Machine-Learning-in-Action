@@ -20,7 +20,7 @@ def pca(dataMat,topNfeat = 9999):
     meanRemoved = dataMat - meanVal
     covMat = np.cov(meanRemoved,rowvar=0)#协方差矩阵
     eigVals,eigVects = np.linalg.eig(np.mat(covMat)) #特征值和特征向量
-    eigInd = np.argsort(eigVals)[::-1][0:topNfeat] #从大到小排序
+    eigInd = np.argsort(eigVals)[::-1][:topNfeat]
     redEigVects = eigVects[:,eigInd] #
     lowData = meanRemoved * redEigVects #降维后的数据
     reconMat = (lowData * redEigVects.T) + meanVal #重构后的数据

@@ -70,7 +70,7 @@ def adaBoostTrainDS(dataArr,Labels,numIters = 40):#dataArr,Labels,numIters分别
     D = np.mat(np.ones((m,1))/m) #数据权重
     aggClassEst = np.zeros((m,1)) #每个数据的类别估计累计值
 
-    for i in range(numIters):
+    for _ in range(numIters):
         bestStump, minError, bestClassPre = buildStump(dataArr,Labels,D)
         alpha = float(0.5 * np.log((1-minError)/max(minError,1e-16))) #每个弱分类器的权重，max(minError,1e-16)防止除零溢出
         bestStump['alpha'] = alpha
@@ -116,7 +116,7 @@ def loadDataSet(fileName):
         m = len(content) #数据条数
         for line in content:
             line = list(map(float,line.strip("\n").split("\t")))
-            dataArr.append(line[0:-1])
+            dataArr.append(line[:-1])
             label.append(line[-1])
     return np.mat(dataArr),label
 

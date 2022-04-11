@@ -22,8 +22,7 @@ def createDataSet():
 ##2 按照给定特征划分数据集 ############################################################################
 def splitDataSet(dataSet,feat_index,value):
     resultData = dataSet[np.nonzero(dataSet[:,feat_index] == value),:][0]
-    delData = np.delete(resultData,feat_index,axis = 1)
-    return delData
+    return np.delete(resultData,feat_index,axis = 1)
 
 ######3.选择最好的数据集划分方式#######################################################################
 def chooseBestFeatureToSplit(dataSet):
@@ -45,8 +44,7 @@ def chooseBestFeatureToSplit(dataSet):
 ################4.递归构建决策树####################################################################
 #返回出现次数最多的类标签
 def majorityCnt(dataSet):
-    most_label = Counter(dataSet[:,-1]).most_common(1)[0]
-    return most_label
+    return Counter(dataSet[:,-1]).most_common(1)[0]
 
 #创建决策树
 def createTree(dataSet,labels):
@@ -187,9 +185,8 @@ def classify(myTree,featLabel,testVec):
 ########9. 使用pickle存储决策树###################################################################
 import pickle
 def storeTree(mytree,file):
-    fr = open(file,'wb')
-    pickle.dump(mytree,fr)
-    fr.close()
+    with open(file,'wb') as fr:
+        pickle.dump(mytree,fr)
 
 def grabTree(file):
     fr = open(file,'rb')
@@ -198,8 +195,7 @@ def grabTree(file):
 #######################10. 使用决策树预测隐形眼镜类型#######################################################
 def loadDataSet(file):
     fr = open(file).readlines()
-    data = np.mat([list(line.strip("\n").split("\t")) for line in fr])
-    return data
+    return np.mat([list(line.strip("\n").split("\t")) for line in fr])
 
 if __name__ == "__main__":
     ##########1.  计算香农熵##########################################################################

@@ -54,16 +54,13 @@ def trainNB0(train_doc,labels):#train_docu表示文档向量 labels:表示文档
 def classifyNB(testData,p_c0,p_c1,p_class1):
     p1 = np.dot(p_c1,testData) + np.log(p_class1)
     p0 = np.dot(p_c0, testData) + np.log(1-p_class1)
-    if p1 > p0: return 1
-    else: return 0
+    return 1 if p1 > p0 else 0
 
 #便利函数
 def testingNB():
     postingList,labels = loadDataSet()
     vocabList = createVocabList(postingList)
-    train_doc = []
-    for i in postingList:
-        train_doc.append(setOfWord2Vec(vocabList, i))
+    train_doc = [setOfWord2Vec(vocabList, i) for i in postingList]
     p_c0, p_c1, p1 = trainNB0(train_doc, labels)
 
     testEntry = ['love','my','dalmation']
@@ -111,7 +108,7 @@ def spamTest():
     #训练集、测试集
     testList = []
     testLabel = []
-    for i in range(10):
+    for _ in range(10):
         index = np.random.randint(0,len(textList))
         testList.append(textList[index])
         testLabel.append(labels[index])
@@ -119,10 +116,7 @@ def spamTest():
         del labels[index]
 
     #生成训练集的词向量
-    trainData = []
-    for ele in textList:
-        trainData.append(bagOfWords2Vec(vocabList,ele))
-
+    trainData = [bagOfWords2Vec(vocabList,ele) for ele in textList]
     p_c0, p_c1, p1 = trainNB0(trainData, labels)
     error_num = 0
     for i in range(10):

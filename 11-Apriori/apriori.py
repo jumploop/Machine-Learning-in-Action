@@ -15,7 +15,7 @@ def createC1(dataSet):
 
     for transaction in dataSet:
         for item in transaction:
-            if not [item] in C1:
+            if [item] not in C1:
                 C1.append([item])
 
     C1.sort()
@@ -32,12 +32,12 @@ def scanD(D,Ck,minSupport):#D为数据集，Ck为候选集，minSupport为最小
     for tid in D:
         for can in Ck:
             if can.issubset(tid):
-                if can not in ssCnt.keys():
-                    ssCnt[can] = 1
-                else:
+                if can in ssCnt:
                     ssCnt[can] += 1
 
-    for key in ssCnt.keys():
+                else:
+                    ssCnt[can] = 1
+    for key in ssCnt:
         support = float(ssCnt[key])/float(numItems)
         if support >= minSupport:
             retList.append(key)

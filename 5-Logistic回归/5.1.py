@@ -5,7 +5,10 @@ import matplotlib.pyplot as plt
 #加载数据集
 def loadDataSet(file):
     fr = open(file).readlines()
-    feature = np.mat([list(map(float,line.strip("\n").split("\t")[0:-1])) for line in fr]) #(100,3)
+    feature = np.mat(
+        [list(map(float, line.strip("\n").split("\t")[:-1])) for line in fr]
+    )
+
     m,n = feature.shape
     x0 = np.ones((m,1))
     feature = np.hstack((x0,feature))
@@ -22,7 +25,7 @@ def gradAscent(feature,label):
     m,n = feature.shape
     w = np.ones((n,1)) #初始化w
     alpha = 0.001
-    for i in range(maxCycles):
+    for _ in range(maxCycles):
         h = sigmoid(feature * w) #(m,1) 预测结果
         w = w + alpha * feature.T * (label - h) #梯度上升法更新w
     return w
@@ -72,21 +75,24 @@ def stocGradAscent1(feature,label,numIter = 150):
 #加载数据集,与loadDataSet函数的区别是：这个函数没有在第一列之前增加全为1的列
 def loadDataSet2(file):
     fr = open(file).readlines()
-    feature = np.mat([list(map(float,line.strip("\n").split("\t")[0:-1])) for line in fr]) #(100,3)
+    feature = np.mat(
+        [list(map(float, line.strip("\n").split("\t")[:-1])) for line in fr]
+    )
+
     label = np.mat([float(line.strip("\n").split("\t")[-1]) for line in fr]).T #(100,1)
     return feature,label
 
 def classifyVector(feature,w):
     h = sigmoid(feature * w)
-    if h > 0.5 : return 1.00
-    else: return 0.00
+    return 1.00 if h > 0.5 else 0.00
 
 def colicTest(trainData,trainLabel,testData,testlabel):
     w = stocGradAscent1(trainData,trainLabel,500)
-    error_sam = 0 #测试样本中预测错误的样本数
     m = testData.shape[0]
-    for i in range(m):
-        if classifyVector(testData[i,:],w) != testlabel[i,:]: error_sam += 1
+    error_sam = sum(
+        classifyVector(testData[i, :], w) != testlabel[i, :] for i in range(m)
+    )
+
     error_rate = float(error_sam)/float(testData.shape[0])
     print("error_rate: " ,error_rate)
     return error_rate
@@ -99,7 +105,7 @@ def multiTest(trainFile,testFile):
     numIter = 10
     error = 0.00
 
-    for i in range(numIter):
+    for _ in range(numIter):
         error += colicTest(trainData,trainLabel,testData,testlabel)
     error_rate = error/float(numIter)
     print("final error_rate: ",error_rate)

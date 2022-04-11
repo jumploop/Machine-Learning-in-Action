@@ -25,9 +25,7 @@ def classify0(inX,dataSet,labels,k):
     sortDistanceIndices = distance.argsort() #从小到大的顺序，返回对应索引值
 
     # classCount = {}  #统计k个邻居中，各个标签的个数
-    votelabel = []
-    for i in range(k):
-        votelabel.append(labels[sortDistanceIndices[i]]) #投票所得第i个邻居的标签
+    votelabel = [labels[sortDistanceIndices[i]] for i in range(k)]
     Xlabel = Counter(votelabel).most_common(1) #求votelabel中出现次数最多的元素和出现次数，该元素即为inX的标签
     return Xlabel[0][0]
 
@@ -40,12 +38,10 @@ def file2matrix(filename):
         lens = len(content)
         returnMat = np.zeros((lens,3))
         labels = []
-        index = 0
-        for line in content:
+        for index, line in enumerate(content):
             line = line.strip("\n").split("\t")
-            returnMat[index,:] = list(map(float,line[0:3]))
+            returnMat[index,:] = list(map(float, line[:3]))
             labels.append(int(line[3]))
-            index += 1
     f1.close()
     return returnMat,labels
 
@@ -109,7 +105,7 @@ def handwritingClasstest():
     for file in os.listdir("digits/trainingDigits"):
         label = int(file.split("_")[0])
         trainLabel.append(label)
-        trainVec = img2vector("digits/trainingDigits/" + file)
+        trainVec = img2vector(f"digits/trainingDigits/{file}")
         trainingMat.append(trainVec)
     trainingMat = np.array(trainingMat)
 
@@ -119,7 +115,7 @@ def handwritingClasstest():
     for file in os.listdir("digits/testDigits"):
         num += 1
         real_label = int(file.split("_")[0]) #真实标签
-        testVec = img2vector("digits/testDigits/" + file) #获取特征
+        testVec = img2vector(f"digits/testDigits/{file}")
         classifierResult = classify0(testVec, trainingMat, trainLabel, 3)  # 分类结果
         if classifierResult != real_label:
             errorCount += 1.00

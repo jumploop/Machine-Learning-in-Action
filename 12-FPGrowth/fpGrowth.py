@@ -34,17 +34,15 @@ def createTree(dataSet,minSup = 1):
             del(headerTable[key])
     freqItemSet = set(headerTable.keys())
 
-    if len(freqItemSet) == 0:return None,None
+    if not freqItemSet:return None,None
     for key in headerTable:
         headerTable[key] = [headerTable[key],None]
 
     retTree = treeNode("NUll Set",1,None)
     for trans,count in dataSet.items():
-        localD = {}
-        for item in trans:
-            if item in freqItemSet:
-                localD[item] = headerTable[item][0]
-        if len(localD) > 0:
+        if localD := {
+            item: headerTable[item][0] for item in trans if item in freqItemSet
+        }:
             orderedItems = [v[0]for v in sorted(localD.items(),key=lambda k:k[1],reverse=True)] #根据全局频率对事务中的元素进行排序
             updateTree(orderedItems,retTree,headerTable,count) #FP树填充
     return retTree,headerTable
@@ -54,7 +52,7 @@ def updateTree(items,inTree,headerTable,count):#FP树填充
         inTree.children[items[0]].inc(count) #已存在该子节点，更新计数值
     else:
         inTree.children[items[0]] = treeNode(items[0],count,inTree)#不存在该子节点，新建树节点
-        if headerTable[items[0]][1] == None:#更新头指针表
+        if headerTable[items[0]][1] is None:#更新头指针表
             headerTable[items[0]][1] = inTree.children[items[0]]
         else:
             updateHeader(headerTable[items[0]][1],inTree.children[items[0]])
@@ -69,20 +67,18 @@ def updateHeader(nodeOri,targetNode): ##更新头指针表
 
 ##构建简单数据集
 def loadSimpDat():
-    simpDat = [['r', 'z', 'h', 'j', 'p'],
-               ['z', 'y', 'x', 'w', 'v', 'u', 't', 's'],
-               ['z'],
-               ['r', 'x', 'n', 'o', 's'],
-               ['y', 'r', 'x', 'z', 'q', 't', 'p'],
-               ['y', 'z', 'x', 'e', 'q', 's', 't', 'm']]
-    return simpDat
+    return [
+        ['r', 'z', 'h', 'j', 'p'],
+        ['z', 'y', 'x', 'w', 'v', 'u', 't', 's'],
+        ['z'],
+        ['r', 'x', 'n', 'o', 's'],
+        ['y', 'r', 'x', 'z', 'q', 't', 'p'],
+        ['y', 'z', 'x', 'e', 'q', 's', 't', 'm'],
+    ]
 
 ##将数据集从列表转换为字典
 def createInitSet(dataSet):
-    retDict = {}
-    for trans in dataSet:
-        retDict[frozenset(trans)] = 1
-    return retDict
+    return {frozenset(trans): 1 for trans in dataSet}
 
 
 ####12.3 从FP树挖掘频繁项集#######################################################

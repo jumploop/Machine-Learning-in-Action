@@ -40,10 +40,7 @@ def searchForSet(x,y,html,year,numPiece,ori_price):
         if sold_tag != None: #只获取有已出售标志的产品
 
             pro_name = ele.find("div",class_ = "ttl").a.get_text() #获取产品名称
-            if "new" in pro_name.lower() or "nisb" in pro_name.lower(): #new_flag 新产品标志
-                new_flag = 1
-            else:
-                new_flag = 0
+            new_flag = 1 if "new" in pro_name.lower() or "nisb" in pro_name.lower() else 0
             price = float(ele.find_all("td")[4].get_text().replace("$","").replace("Free shipping","").replace(",",""))
             #只保留成套产品的数据  将产品数据存放到x,y中
             if price > ori_price*0.5:
